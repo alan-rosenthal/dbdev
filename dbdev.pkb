@@ -1,3 +1,4 @@
+
 CREATE OR REPLACE PACKAGE BODY NCOWN.dbdev_pkg
 IS
   g_log_enabled_flag          BOOLEAN := FALSE;
