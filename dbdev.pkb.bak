@@ -320,11 +320,6 @@ IS
 	*
 	*	Public Procedure:
 	*
-	*	This procedure is currently commented out.  But it is an example of how
-	*	a procedure could be written that will output a collection of records.
-	*	If there are many collections that need to be logged, then this procedure
-	*	can be overloaded.
-	*
 	***************************************************************************
 	*/
 	
@@ -347,8 +342,7 @@ IS
 	--    WHILE i IS NOT NULL
 	--    LOOP
 	--      log(p_tag => p_tag, 
-	--          p_notes => '(' || TO_CHAR(i) || ') is [' || p_collection(i).an_id || ']' || 
-	                                                 '[' || p_collection(i).value || ']');
+	--          p_notes => '(' || TO_CHAR(i) || ') is [' || p_collection(i).an_id || ']');
 	--      i := p_collection.NEXT(i);
 	--    END LOOP; 
 	--  END IF;
