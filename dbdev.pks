@@ -1,4 +1,5 @@
-CREATE OR REPLACE PACKAGE dbdev
+CREATE OR REPLACE PACKAGE dbdev 
+       AUTHID CURRENT_USER
 IS
 
    PROCEDURE log_enable (p_tag           IN VARCHAR2 DEFAULT NULL,
@@ -8,18 +9,15 @@ IS
 
    PROCEDURE log_disable (p_tag                IN VARCHAR2 DEFAULT NULL);
 
-   PROCEDURE log (p_notes         IN VARCHAR2 DEFAULT NULL,
-                  p_module        IN VARCHAR2 DEFAULT NULL,
-                  p_action        IN VARCHAR2 DEFAULT NULL,
-                  p_signon_id     IN NUMBER   DEFAULT NULL,
-                  p_sessid        IN NUMBER   DEFAULT NULL,
-                  p_tag           IN VARCHAR2 DEFAULT NULL,
-                  p_errnbr        IN NUMBER   DEFAULT NULL,
-                  p_errmsg        IN VARCHAR2 DEFAULT NULL,
-                  p_whoami_flag   IN BOOLEAN  DEFAULT FALSE);
-
-   PROCEDURE log_append (p_notes   IN VARCHAR2 DEFAULT NULL, 
-                         p_tag     IN VARCHAR2 DEFAULT NULL);
+   PROCEDURE log_msg (p_notes         IN VARCHAR2 DEFAULT NULL,
+                      p_module        IN VARCHAR2 DEFAULT NULL,
+                      p_action        IN VARCHAR2 DEFAULT NULL,
+                      p_signon_id     IN NUMBER   DEFAULT NULL,
+                      p_sessid        IN NUMBER   DEFAULT NULL,
+                      p_tag           IN VARCHAR2 DEFAULT NULL,
+                      p_errnbr        IN NUMBER   DEFAULT NULL,
+                      p_errmsg        IN VARCHAR2 DEFAULT NULL,
+                      p_whoami_flag   IN BOOLEAN  DEFAULT FALSE);
 
    PROCEDURE log_whoami (p_notes   IN VARCHAR2 DEFAULT NULL);
 
