@@ -35,12 +35,11 @@ IS
                                   p_action       IN VARCHAR2,
                                   p_msg          IN VARCHAR2)
    IS
-
+      v_proc         CONSTANT VARCHAR2(32)   := 'L_LOG_MULTI_LINE_MSG';
       ptr1           PLS_INTEGER;
       ptr2           PLS_INTEGER;
       len            PLS_INTEGER;
       v_msg          VARCHAR2(4000) := p_msg;
-      v_proc         VARCHAR2(30)   := 'L_LOG_MULTI_LINE_MSG';
       
    BEGIN
       IF SUBSTR(p_msg, -1, 1) != CHR(10) THEN
@@ -50,7 +49,8 @@ IS
       ptr1 := 1;
       len := LENGTH(v_msg);
 
-      WHILE ptr1 < len LOOP
+      WHILE ptr1 < len 
+      LOOP
          ptr2 := INSTR(v_msg, CHR(10), ptr1);
          EXIT WHEN ptr2 = 0;
 
@@ -78,7 +78,7 @@ IS
    IS
       PRAGMA AUTONOMOUS_TRANSACTION;
 
-      v_proc         VARCHAR2(30) := 'L_DELETE_FROM_LOG';
+      v_proc         CONSTANT VARCHAR2(32) := 'L_DELETE_FROM_LOG';
    
    BEGIN
       DELETE FROM dbdev_log
@@ -101,13 +101,11 @@ IS
    */
 
    PROCEDURE log_enable(p_tag          IN VARCHAR2 DEFAULT NULL,
-                        p_append_flag  IN BOOLEAN DEFAULT FALSE,
-                        p_errnbr       IN NUMBER DEFAULT NULL,
-                        p_errmsg       IN VARCHAR2 DEFAULT NULL)
+                        p_append_flag  IN BOOLEAN  DEFAULT FALSE)
    IS
+      v_proc         CONSTANT VARCHAR2(32)            := 'LOG_ENABLE';
       v_tag          dbdev_log.tag%TYPE;
-      v_action       dbdev_log.action%TYPE;
-      v_proc         VARCHAR2(30) := 'LOG_ENABLE';
+      
    BEGIN
       g_log_enabled_flag := TRUE;
 
@@ -120,10 +118,8 @@ IS
 
       g_log_g_start_timer := DBMS_UTILITY.get_time;
 
-      v_action := 'Start Logging';
-
-      LOG(p_tag       => v_tag,
-          p_action    => v_action,
+      log(p_tag         => v_tag,
+          p_action      => 'Enable Logging',
           p_whoami_flag => TRUE);
           
    EXCEPTION
@@ -142,9 +138,15 @@ IS
 
    PROCEDURE log_disable(p_tag IN VARCHAR2 DEFAULT NULL)
    IS
-      v_proc         VARCHAR2(30) := 'LOG_DISABLE';
+      v_proc         CONSTANT VARCHAR2(32) := 'LOG_DISABLE';
+      v_tag          dbdev_log.tag%TYPE;
       
    BEGIN
+      v_tag := NVL(p_tag, SYS_CONTEXT('USERENV', 'OS_USER'));
+
+      log(p_tag         => v_tag,
+          p_action      => 'Disable Logging');
+
       g_log_enabled_flag        := FALSE;
       g_log_default_tag         := NULL;
       g_log_g_start_timer       := NULL;
@@ -164,23 +166,25 @@ IS
    ***************************************************************************
    */
 
-   PROCEDURE log(p_notes        IN VARCHAR2  DEFAULT NULL,
-                 p_module       IN VARCHAR2  DEFAULT NULL,
-                 p_action       IN VARCHAR2  DEFAULT NULL,
-                 p_signon_id    IN NUMBER    DEFAULT NULL,
-                 p_sessid       IN NUMBER    DEFAULT NULL,
-                 p_tag          IN VARCHAR2  DEFAULT NULL,
-                 p_errnbr       IN NUMBER    DEFAULT NULL,
-                 p_errmsg       IN VARCHAR2  DEFAULT NULL,
-                 p_whoami_flag  IN BOOLEAN   DEFAULT FALSE)
+   PROCEDURE logit(p_notes        IN VARCHAR2  DEFAULT NULL,
+                   p_module       IN VARCHAR2  DEFAULT NULL,
+                   p_action       IN VARCHAR2  DEFAULT NULL,
+                   p_signon_id    IN NUMBER    DEFAULT NULL,
+                   p_sessid       IN NUMBER    DEFAULT NULL,
+                   p_tag          IN VARCHAR2  DEFAULT NULL,
+                   p_errnbr       IN NUMBER    DEFAULT NULL,
+                   p_errmsg       IN VARCHAR2  DEFAULT NULL,
+                   p_whoami_flag  IN BOOLEAN   DEFAULT FALSE)
    IS
       PRAGMA AUTONOMOUS_TRANSACTION;
+
+      v_proc                    CONSTANT VARCHAR2(32) := 'logit';
       
-      v_tag                     VARCHAR2(1000);
+      v_tag                     dbdev_log.tag%TYPE;
+      
       v_v$session_module        VARCHAR2(64);
       v_v$session_action        VARCHAR2(64);
       v_v$session_client_info   VARCHAR2(64);
-      v_proc                    VARCHAR2(30) := 'LOG';
       
    BEGIN
       IF g_log_enabled_flag THEN
@@ -264,6 +268,7 @@ IS
    EXCEPTION
       WHEN OTHERS THEN
          l_handle_others_exception(v_proc,  SQLERRM);
+         RAISE;
          
    END log;
 
@@ -275,51 +280,19 @@ IS
    ***************************************************************************
    */
 
-   PROCEDURE log_append(p_notes        IN VARCHAR2 DEFAULT NULL,
-                        p_tag          IN VARCHAR2 DEFAULT NULL)
-   IS
-      PRAGMA AUTONOMOUS_TRANSACTION;
-      v_tag          VARCHAR2(1000);
-      v_proc         VARCHAR2(30) := 'LOG_APPEND';
-   BEGIN
-      IF g_log_enabled_flag THEN
-         v_tag := NVL(p_tag, g_log_default_tag);
-         g_log_default_tag := v_tag;
-
-         IF g_log_latest_dbdev_log_id IS NULL THEN
-            LOG(p_notes => p_notes);
-         ELSE
-            UPDATE dbdev_log
-               SET notes = notes || ' ' || p_notes
-             WHERE dbdev_log_id = g_log_latest_dbdev_log_id;
-         END IF;
-
-         COMMIT;
-      END IF;
-   EXCEPTION
-      WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
-   END log_append;
-
-
-   /**************************************************************************
-   *
-   * Public Procedure:
-   *
-   ***************************************************************************
-   */
-
    PROCEDURE log_whoami(p_notes IN VARCHAR2 DEFAULT NULL)
    IS
-      v_proc         VARCHAR2(30) := 'LOG';
+      v_proc         CONSTANT VARCHAR2(32) := 'LOG';
+      
    BEGIN
-      LOG(p_notes     => p_notes,
+      log(p_notes       => p_notes,
           p_whoami_flag => TRUE);
+          
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END log_whoami;
 
 
@@ -339,7 +312,7 @@ IS
    --                             p_notes        IN VARCHAR2 DEFAULT NULL,
    --                             p_tag          IN VARCHAR2 DEFAULT NULL)
    --   IS
-   --      v_proc   VARCHAR2 (30) := 'LOG_COLLECTION';
+   --      v_proc   CONSTANT VARCHAR2 (32) := 'LOG_COLLECTION';
    --      i        PLS_INTEGER;
    --
    --   BEGIN
@@ -363,6 +336,7 @@ IS
    -- EXCEPTION
    --   WHEN OTHERS THEN
    --      l_handle_others_exception(v_proc, SQLERRM);
+   --      RAISE;
    --
    -- END log_collection;
 
@@ -376,17 +350,20 @@ IS
 
    PROCEDURE log_format_call_stack(p_tag IN VARCHAR2 DEFAULT NULL)
    IS
-      v_proc         VARCHAR2(30) := 'LOG_FORMAT_CALL_STACK';
+      v_proc         CONSTANT VARCHAR2(32) := 'LOG_FORMAT_CALL_STACK';
+      
    BEGIN
       IF g_log_enabled_flag THEN
-         l_log_multi_line_msg(p_tag       => p_tag,
-                              p_action    => 'Format Call Stack',
-                              p_msg       => DBMS_UTILITY.format_call_stack);
+         l_log_multi_line_msg(p_tag    => p_tag,
+                              p_action => 'Format Call Stack',
+                              p_msg    => DBMS_UTILITY.format_call_stack);
       END IF;
+      
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END log_format_call_stack;
 
 
@@ -399,17 +376,20 @@ IS
 
    PROCEDURE log_format_error_backtrace(p_tag IN VARCHAR2 DEFAULT NULL)
    IS
-      v_proc         VARCHAR2(30) := 'LOG_FORMAT_ERROR_BACKTRACE';
+      v_proc         CONSTANT VARCHAR2(32) := 'LOG_FORMAT_ERROR_BACKTRACE';
+      
    BEGIN
       IF g_log_enabled_flag THEN
-         l_log_multi_line_msg(p_tag       => p_tag,
-                              p_action    => 'Format Error Backtrace',
-                              p_msg       => DBMS_UTILITY.format_error_backtrace);
+         l_log_multi_line_msg(p_tag    => p_tag,
+                              p_action => 'Format Error Backtrace',
+                              p_msg    => DBMS_UTILITY.format_error_backtrace);
       END IF;
+      
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END log_format_error_backtrace;
 
 
@@ -422,17 +402,20 @@ IS
 
    PROCEDURE log_format_error_stack(p_tag IN VARCHAR2 DEFAULT NULL)
    IS
-      v_proc         VARCHAR2(30) := 'LOG_FORMAT_ERROR_STACK';
+      v_proc         CONSTANT VARCHAR2(32) := 'LOG_FORMAT_ERROR_STACK';
+      
    BEGIN
       IF g_log_enabled_flag THEN
-         l_log_multi_line_msg(p_tag       => p_tag,
-                              p_action    => 'Format Error Stack',
-                              p_msg       => DBMS_UTILITY.format_error_stack);
+         l_log_multi_line_msg(p_tag    => p_tag,
+                              p_action => 'Format Error Stack',
+                              p_msg    => DBMS_UTILITY.format_error_stack);
       END IF;
+      
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END log_format_error_stack;
 
 
@@ -445,17 +428,20 @@ IS
 
    PROCEDURE timer_start(p_msg IN VARCHAR2)
    IS
-      v_proc         VARCHAR2(30) := 'TIMER_START';
+      v_proc         CONSTANT VARCHAR2(32) := 'TIMER_START';
+      
    BEGIN
       IF p_msg IS NOT NULL THEN
          DBMS_OUTPUT.put_line(p_msg);
       END IF;
 
       g_start_time := DBMS_UTILITY.get_time;
+
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END timer_start;
 
 
@@ -468,8 +454,9 @@ IS
 
    PROCEDURE timer_lap(p_msg IN VARCHAR2)
    IS
+      v_proc         CONSTANT VARCHAR2(32) := 'TIMER_LAP';
       lap_time       NUMBER;
-      v_proc         VARCHAR2(30) := 'TIMER_LAP';
+
    BEGIN
       IF g_start_time IS NULL THEN
          g_start_time := DBMS_UTILITY.get_time;
@@ -478,19 +465,13 @@ IS
          lap_time := (DBMS_UTILITY.get_time - g_start_time) / 100;
       END IF;
 
-      IF p_msg IS NULL THEN
-         DBMS_OUTPUT.put_line('Lap time ' ||
-                              TO_CHAR(lap_time,
-                                      '999,990.99'));
-      ELSE
-         DBMS_OUTPUT.put_line(p_msg ||
-                              TO_CHAR(lap_time,
-                                      '999,990.99'));
-      END IF;
+      DBMS_OUTPUT.put_line(NVL(p_msg, 'Lap Time') || ' : ' || TO_CHAR(lap_time, '999,990.99'));
+
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END timer_lap;
 
 
@@ -503,8 +484,9 @@ IS
 
    PROCEDURE timer_end(p_msg IN VARCHAR2)
    IS
+      v_proc         CONSTANT VARCHAR2(32) := 'TIMER_END';
       elapsed_time   NUMBER;
-      v_proc         VARCHAR2(30) := 'TIMER_END';
+      
    BEGIN
       IF g_start_time IS NULL THEN
          elapsed_time := NULL;
@@ -513,19 +495,14 @@ IS
          g_start_time := NULL;
       END IF;
 
-      IF p_msg IS NULL THEN
-         DBMS_OUTPUT.put_line('Elapsed time ' ||
-                              TO_CHAR(elapsed_time,
-                                      '999,990.99'));
-      ELSE
-         DBMS_OUTPUT.put_line(p_msg ||
-                              TO_CHAR(elapsed_time,
-                                      '999,990.99'));
-      END IF;
+      DBMS_OUTPUT.put_line(NVL(p_msg, 'Elapsed time') || ' : ' || TO_CHAR(elapsed_time, '999,990.99'));
+
    EXCEPTION
       WHEN OTHERS THEN
-         l_handle_others_exception(v_proc,
-                                   SQLERRM);
+         l_handle_others_exception(v_proc, SQLERRM);
+         RAISE;
+         
    END timer_end;
+   
 END dbdev;
 /

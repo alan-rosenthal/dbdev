@@ -1,10 +1,9 @@
 CREATE OR REPLACE PACKAGE dbdev
+   AUTHID CURRENT_USER
 IS
 
    PROCEDURE log_enable (p_tag           IN VARCHAR2 DEFAULT NULL,
-                         p_append_flag   IN BOOLEAN  DEFAULT FALSE,
-                         p_errnbr        IN NUMBER   DEFAULT NULL,
-                         p_errmsg        IN VARCHAR2 DEFAULT NULL);
+                         p_append_flag   IN BOOLEAN  DEFAULT FALSE);
 
    PROCEDURE log_disable (p_tag                IN VARCHAR2 DEFAULT NULL);
 
@@ -17,9 +16,6 @@ IS
                   p_errnbr        IN NUMBER   DEFAULT NULL,
                   p_errmsg        IN VARCHAR2 DEFAULT NULL,
                   p_whoami_flag   IN BOOLEAN  DEFAULT FALSE);
-
-   PROCEDURE log_append (p_notes   IN VARCHAR2 DEFAULT NULL, 
-                         p_tag     IN VARCHAR2 DEFAULT NULL);
 
    PROCEDURE log_whoami (p_notes   IN VARCHAR2 DEFAULT NULL);
 
