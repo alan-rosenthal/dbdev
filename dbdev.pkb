@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY dbdev
+CREATE OR REPLACE PACKAGE BODY DBDEV_USER.dbdev
 IS
    g_log_enabled_flag         BOOLEAN        := FALSE;
    g_log_default_tag          VARCHAR2(1000) := NULL;
@@ -61,8 +61,8 @@ IS
          EXIT WHEN ptr2 = 0;
 
          log_msg(p_tag    => p_tag,
-             p_action => p_action,
-             p_notes  => SUBSTR(v_msg, ptr1, ptr2 - ptr1));
+                 p_action => p_action,
+                 p_notes  => SUBSTR(v_msg, ptr1, ptr2 - ptr1));
          ptr1 := ptr2 + 1;
       END LOOP;
       
@@ -111,7 +111,7 @@ IS
    PROCEDURE log_enable(p_tag          IN VARCHAR2 DEFAULT NULL,
                         p_append_flag  IN BOOLEAN  DEFAULT FALSE)
    IS
-      v_proc         CONSTANT VARCHAR2(32)            := 'DBDEV.log_enable';
+      v_proc         CONSTANT VARCHAR2(32) := 'DBDEV.log_enable';
       v_tag          dbdev_log.tag%TYPE;
       v_action       dbdev_log.action%TYPE;
       
@@ -129,9 +129,9 @@ IS
 
       v_action := 'Start Logging';
 
-      log_msg(p_tag     => v_tag,
-          p_action      => v_action,
-          p_whoami_flag => TRUE);
+      log_msg(p_tag         => v_tag,
+              p_action      => v_action,
+              p_whoami_flag => TRUE);
           
    EXCEPTION
       WHEN OTHERS THEN
@@ -156,13 +156,13 @@ IS
    BEGIN
       v_tag := NVL(p_tag, SYS_CONTEXT('USERENV', 'OS_USER'));
 
-      log(p_tag         => v_tag,
-          p_action      => 'Disable Logging');
+      log_msg(p_tag         => v_tag,
+              p_action      => 'Disable Logging',
+              p_whoami_flag => TRUE);
 
       g_log_enabled_flag        := FALSE;
       g_log_default_tag         := NULL;
       g_log_g_start_timer       := NULL;
-      g_log_latest_dbdev_log_id := NULL;
       
    EXCEPTION
       WHEN OTHERS THEN
@@ -182,8 +182,6 @@ IS
    PROCEDURE log_msg(p_notes        IN VARCHAR2  DEFAULT NULL,
                      p_module       IN VARCHAR2  DEFAULT NULL,
                      p_action       IN VARCHAR2  DEFAULT NULL,
-                     p_signon_id    IN NUMBER    DEFAULT NULL,
-                     p_sessid       IN NUMBER    DEFAULT NULL,
                      p_tag          IN VARCHAR2  DEFAULT NULL,
                      p_errnbr       IN NUMBER    DEFAULT NULL,
                      p_errmsg       IN VARCHAR2  DEFAULT NULL,
@@ -212,10 +210,6 @@ IS
                                   module,
                                   action,
                                   notes,
-                                  signon_id,
-                                  sessid,
-                                  errnbr,
-                                  errmsg,
                                   timer,
                                   current_user,
                                   terminal,
@@ -233,10 +227,6 @@ IS
                                   p_module,
                                   p_action,
                                   p_notes,
-                                  p_signon_id,
-                                  p_sessid,
-                                  p_errnbr,
-                                  p_errmsg,
                                   (DBMS_UTILITY.get_time - g_log_g_start_timer) / 100,
                                   SYS_CONTEXT('USERENV', 'CURRENT_USER'),
                                   SYS_CONTEXT('USERENV', 'TERMINAL'),
@@ -255,19 +245,11 @@ IS
                                   module,
                                   action,
                                   notes,
-                                  signon_id,
-                                  sessid,
-                                  errnbr,
-                                  errmsg,
                                   timer)
                           VALUES (v_tag,
                                   p_module,
                                   p_action,
                                   p_notes,
-                                  p_signon_id,
-                                  p_sessid,
-                                  p_errnbr,
-                                  p_errmsg,
                                   (DBMS_UTILITY.get_time - g_log_g_start_timer) / 100);
          END IF;
 
@@ -294,8 +276,8 @@ IS
       v_proc         CONSTANT VARCHAR2(32) := 'DBDEV.log_whoami';
       
    BEGIN
-      log(p_notes       => p_notes,
-          p_whoami_flag => TRUE);
+      log_msg(p_notes       => p_notes,
+              p_whoami_flag => TRUE);
           
    EXCEPTION
       WHEN OTHERS THEN
