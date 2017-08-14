@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE BODY test_dbdev
 AS
-   tagname CONSTANT VARCHAR2(10) := 'test_dbdev';
+   C_TAGNAME CONSTANT VARCHAR2(10) := 'test_dbdev';
 
    -----------------------------------------------------------------------------
    -- global_setup
@@ -13,7 +13,7 @@ AS
          
       BEGIN
          DELETE FROM dbdev_log
-               WHERE tag = tagname;
+               WHERE tag = C_TAGNAME;
 
          COMMIT;
       END l_delete_all_rows;
@@ -33,7 +33,7 @@ AS
    BEGIN
       OPEN cur FOR SELECT *
                      FROM dbdev_log
-                    WHERE tag = tagname;
+                    WHERE tag = C_TAGNAME;
 
       ut.expect(cur).to_be_empty();
 
@@ -50,21 +50,20 @@ AS
    IS
       rowcount       NUMBER := 0;
       row            dbdev_log%ROWTYPE;
-      cur            SYS_REFCURSOR;
       
    BEGIN
-      dbdev.log_enable(tagname);
+      dbdev.log_enable(C_TAGNAME);
 
       SELECT COUNT(*)
         INTO rowcount
         FROM dbdev_log
-       WHERE tag = TAGNAME;
+       WHERE tag = C_TAGNAME;
       ut.expect( rowcount ).to_equal(1);
       
       SELECT *
         INTO row
         FROM dbdev_log
-       WHERE tag = TAGNAME; 
+       WHERE tag = C_TAGNAME; 
       ut.expect( row.action ).to_equal( 'Start Logging' );  
       ut.expect( row.current_user ).to_equal( 'DBDEV_USER' );
       ut.expect( row.v$session_module ).to_equal( 'utPLSQLx' );
